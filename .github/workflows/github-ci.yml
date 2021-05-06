@@ -69,12 +69,12 @@ jobs:
     strategy:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        #arch: [x86_64, aarch64]
-        #exclude:
-        #  - os: macos-latest
-        #    arch: aarch64
-        #  - os: windows-latest
-        #    arch: aarch64
+        arch: [x86_64, aarch64]
+        exclude:
+          - os: macos-latest
+            arch: aarch64
+          - os: windows-latest
+            arch: aarch64
     steps:
       - uses: actions/checkout@v2
       - uses: hecrj/setup-rust-action@v1
@@ -84,9 +84,9 @@ jobs:
           python-version: '3.8'
       - name: architecture
         run: uname -m
-      #- uses: docker/setup-qemu-action@v1
-      #  if: ${{ matrix.arch == 'aarch64' }}
-      #  name: Set up QEMU
+      - uses: docker/setup-qemu-action@v1
+        if: ${{ matrix.arch == 'aarch64' }}
+        name: Set up QEMU
       - name: Install bump2version
         run: pip install bump2version
       - name: Install cibuildwheel
@@ -98,6 +98,7 @@ jobs:
         working-directory: crates/python/
         run: |
           # Fix ../core being outside of the project built by cibuildwheel:
+          CIBW_ARCHS_LINUX: ${{matrix.arch}}
           perl -p -i -e 's/..\/core/core/' Cargo.toml && mv ../core .
           export CIBW_BEFORE_BUILD='pip install setuptools-rust && curl -o /tmp/rustup.sh https://sh.rustup.rs && sh /tmp/rustup.sh -y'
           export CIBW_ENVIRONMENT='PATH=$HOME/.cargo/bin:$PATH'
